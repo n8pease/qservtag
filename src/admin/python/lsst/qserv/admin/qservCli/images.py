@@ -94,7 +94,7 @@ def last_git_tag(cwd: str) -> str:
         SHA of that tag can not be gotten from git.
     """
     res = subproc.run(
-        "git describe --abbrev=0".split(),
+        "git describe --always --tags".split(),
         capture_stdout=True,
         cwd=cwd,
         errmsg=f"Failed to get most recent tag from repo at {cwd}."
