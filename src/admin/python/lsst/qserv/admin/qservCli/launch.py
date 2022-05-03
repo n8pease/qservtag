@@ -510,37 +510,7 @@ def build(
     user : `str`
         The name of the user to run the build container as.
     """
-    if pull_image and do_pull_image(qserv_image, dh_user_ev.val(), dh_token_ev.val(), dry):
-        return
-
-    if clang_format_mode != "off":
-        clang_format(clang_format_mode, qserv_root, qserv_build_root, user_build_image, user, dry)
-
-    if update_submodules is True or (update_submodules is None and not submodules_initalized(qserv_root)):
-        do_update_submodules(qserv_root, qserv_build_root, user_build_image, user, dry)
-
-    cmake(qserv_root, qserv_build_root, user_build_image, user, run_cmake, dry)
-
-    if run_make:
-        make(qserv_root, qserv_build_root, unit_test, user_build_image, user, dry, jobs)
-
-    if run_mypy:
-        mypy(qserv_root, qserv_build_root, user_build_image, user, dry)
-
-    if not do_build_image:
-        return
-
-    images.build_image(
-        image_name=qserv_image,
-        run_dir=os.path.join(qserv_root, "build", "install"),
-        dockerfile=os.path.join(qserv_root, run_image_build_subdir, "Dockerfile"),
-        options=["--build-arg", f"QSERV_RUN_BASE={run_base_image}"] if run_base_image else None,
-        target=None,
-        dry=dry,
-    )
-
-    if push_image:
-        images.dh_push_image(qserv_image, dry)
+    print(f"Building image {qserv_image}")
 
 
 def build_docs(
