@@ -28,6 +28,10 @@ jobs:
         with:
           fetch-depth: 0 # 0 is "all history and branch tags"
 
+      - name: show tag with rev-list test
+        run: |
+          git describe --tags $(git rev-list --tags --max-count=1)
+
       - name: Prepare user build image
         run: |
           ./admin/local/cli/qserv --log-level DEBUG build-user-build-image --build-image qserv/lite-build:2022.4.2-rc1-51-g474c66c0e \
