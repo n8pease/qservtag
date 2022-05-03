@@ -207,6 +207,9 @@ def show_qserv_environment(
 @do_build_image_option()
 @jobs_option()
 @dry_option()
+@click.option(
+    "--ref"
+)
 def build(
     qserv_root: str,
     qserv_build_root: str,
@@ -225,6 +228,7 @@ def build(
     pull_image: bool,
     update_submodules: bool,
     user: str,
+    ref: str,
 ) -> None:
     "Build qserv and make a new qserv run image."
     launch.build(
@@ -245,6 +249,7 @@ def build(
         pull_image=pull_image,
         update_submodules=update_submodules,
         user=user,
+        ref=ref,
     )
 
 

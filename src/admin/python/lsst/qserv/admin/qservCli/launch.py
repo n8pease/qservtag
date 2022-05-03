@@ -467,6 +467,7 @@ def build(
     pull_image: bool,
     update_submodules: bool,
     user: str,
+    ref: str,
 ) -> None:
     """Build qserv and a new lite-qserv image.
 
@@ -509,8 +510,11 @@ def build(
         absence/presense of a file populated by running it.
     user : `str`
         The name of the user to run the build container as.
+    ref : `str
+        The ref according to github actions.
     """
     print(f"Building image {qserv_image}")
+    print(f"github.ref_name is {ref}")
 
 
 def build_docs(

@@ -30,7 +30,7 @@ jobs:
 
       - name: Prepare user build image
         run: |
-          ./admin/local/cli/qserv --log-level DEBUG build-user-build-image --build-image qserv/lite-build:2022.4.2-rc1-51-g474c66c0e \
+          ./admin/local/cli/qserv --log-level DEBUG build-user-build-image --build-image qserv/lite-build:2022.4.2-rc1-51-g474c66c0e --ref ${{github.ref_name}}\
           --group docker_outer
 
       - name: Build lite-qserv image
