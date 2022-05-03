@@ -28,9 +28,6 @@ jobs:
         with:
           fetch-depth: 0 # 0 is "all history and branch tags"
 
-      - name: Fetch all from git
-        run: git fetch --all --prune
-
       - name: show tag with rev-list test
         run: |
           git describe --always $(git rev-list HEAD --max-count=1)
