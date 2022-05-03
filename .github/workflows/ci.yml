@@ -1,0 +1,260 @@
+# Qserv CI workflow
+---
+name: "CI"
+on:
+  push:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+
+  update-base-images:
+    name: Update base images
+    runs-on: ubuntu-20.04
+    outputs:
+      build-rebuilt: ${{ steps.rebuild.outputs.build-rebuilt }}
+      run-base-rebuilt: ${{ steps.rebuild.outputs.run-base-rebuilt }}
+    steps:
+
+      - name: Install python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install click
+        run: |
+          python -m pip install --upgrade pip
+          pip install click pyyaml requests
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0  # 0 is "all history and branch tags"
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.FM_DOCKERHUB_TOKEN_USER }}
+          password: ${{ secrets.FM_DOCKERHUB_TOKEN }}
+
+      - name: Rebuild and push build image if needed
+        id: rebuild
+        run: |
+          if [[ $(./admin/local/cli/qserv --log-level DEBUG dh-image-exists build-base) == "True" ]]; then
+            echo "Build image already on docker hub; skipping..."
+            echo "::set-output name=build-rebuilt::False"
+          else
+            ./admin/local/cli/qserv --log-level DEBUG build-build-image --push-image
+            echo "::set-output name=build-rebuilt::True"
+          fi
+        env:
+          QSERV_DH_USER: ${{ secrets.FM_DOCKERHUB_TOKEN_USER }}
+          QSERV_DH_TOKEN: ${{ secrets.FM_DOCKERHUB_TOKEN }}
+
+      - name: Rebuild and push run base image if needed
+        run: |
+          if [[ $(./admin/local/cli/qserv --log-level DEBUG dh-image-exists run-base) == "True" ]]; then
+            echo "Run base image already on docker hub; skipping..."
+            echo "::set-output name=run-base-rebuilt::False"
+          else
+            ./admin/local/cli/qserv --log-level DEBUG build-run-base-image --push-image
+            echo "::set-output name=run-base-rebuilt::True"
+          fi
+        env:
+          QSERV_DH_USER: ${{ secrets.FM_DOCKERHUB_TOKEN_USER }}
+          QSERV_DH_TOKEN: ${{ secrets.FM_DOCKERHUB_TOKEN }}
+
+  update-mariadb-image:
+    name: Update MariaDB image
+    runs-on: ubuntu-20.04
+    outputs:
+      rebuilt: ${{ steps.rebuild.outputs.rebuilt }}
+    steps:
+
+      - name: Install python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install click
+        run: |
+          python -m pip install --upgrade pip
+          pip install click pyyaml requests
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0  # 0 is "all history and branch tags"
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.FM_DOCKERHUB_TOKEN_USER }}
+          password: ${{ secrets.FM_DOCKERHUB_TOKEN }}
+
+      - name: Rebuild and push if needed
+        id: rebuild
+        run: |
+          if [[ $(./admin/local/cli/qserv --log-level DEBUG dh-image-exists mariadb) == "True" ]]; then
+            echo "MariaDB image already on docker hub; skipping..."
+            echo "::set-output name=rebuilt::False"
+          else
+            ./admin/local/cli/qserv --log-level DEBUG build-mariadb-image --push-image
+            echo "::set-output name=rebuilt::True"
+          fi
+        env:
+          QSERV_DH_USER: ${{ secrets.FM_DOCKERHUB_TOKEN_USER }}
+          QSERV_DH_TOKEN: ${{ secrets.FM_DOCKERHUB_TOKEN }}
+
+  documentation:
+    name: Documentation
+    runs-on: ubuntu-20.04
+    needs: update-base-images
+    steps:
+
+      - name: Install python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install click
+        run: |
+          python -m pip install --upgrade pip
+          pip install click pyyaml requests
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0  # 0 is "all history and branch tags"
+          submodules: true
+
+      - name: Check for changes
+        uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+              docs:
+                - '**'
+
+      - name: Prepare user build image
+        if: needs.update-base-images.outputs.build-rebuilt == 'True' || steps.filter.outputs.docs == 'true'
+        run: |
+          ./admin/local/cli/qserv --log-level DEBUG build-user-build-image \
+          --group docker_outer
+
+      - name: Build and publish
+        if: needs.update-base-images.outputs.build-rebuilt == 'True' || steps.filter.outputs.docs == 'true'
+        run: |
+          ./admin/local/cli/qserv build-docs --cmake --linkcheck --upload
+        env:
+          QSERV_LTD_USERNAME: ${{ secrets.LTD_USERNAME }}
+          QSERV_LTD_PASSWORD: ${{ secrets.LTD_PASSWORD }}
+          QSERV_GH_EVENT_NAME: ${{ github.event_name }}
+          QSERV_GH_HEAD_REF: ${{ github.head_ref }}
+          QSERV_GH_REF: ${{ github.ref }}
+
+
+  update-run-image:
+    name: Update Qserv image
+    runs-on: ubuntu-20.04
+    needs: update-base-images
+    steps:
+
+      - name: Install python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install click
+        run: |
+          python -m pip install --upgrade pip
+          pip install click pyyaml requests
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0  # 0 is "all history and branch tags"
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.FM_DOCKERHUB_TOKEN_USER }}
+          password: ${{ secrets.FM_DOCKERHUB_TOKEN }}
+
+      - name: Prepare user build image
+        run: |
+          ./admin/local/cli/qserv --log-level DEBUG build-user-build-image \
+          --group docker_outer
+
+      - name: Build lite-qserv image
+        run: |
+          ./admin/local/cli/qserv --log-level DEBUG build \
+          --pull-image \
+          --push-image \
+          --clang-format CHECK \
+          -j2
+        env:
+          QSERV_DH_USER: ${{ secrets.FM_DOCKERHUB_TOKEN_USER }}
+          QSERV_DH_TOKEN: ${{ secrets.FM_DOCKERHUB_TOKEN }}
+
+  compose-integration-tests:
+    name: Integration tests (compose)
+    runs-on: ubuntu-20.04
+    needs: [update-mariadb-image, update-run-image]
+    steps:
+
+      - name: Install python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install click
+        run: |
+          python -m pip install --upgrade pip
+          pip install click pyyaml requests
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0  # 0 is "all history and branch tags"
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.FM_DOCKERHUB_TOKEN_USER }}
+          password: ${{ secrets.FM_DOCKERHUB_TOKEN }}
+
+      - name: Launch qserv
+        run: |
+          ./admin/local/cli/qserv --log-level DEBUG up
+
+      - name: Run integration tests
+        run: |
+          ./admin/local/cli/qserv --log-level DEBUG itest \
+          --wait 180
+
+      - name: Remove integration test volumes
+        run: |
+          ./admin/local/cli/qserv --log-level DEBUG itest-rm
+
+      - name: Shut down qserv
+        run: |
+          ./admin/local/cli/qserv --log-level DEBUG down \
+          -v
+
+  notify-on-fail:
+    name: Notify Slack if fail on main
+    runs-on: ubuntu-20.04
+    needs: [documentation, compose-integration-tests]
+    if: github.ref == 'refs/heads/main' && failure()
+    steps:
+      - name: Notify
+        uses: voxmedia/github-action-slack-notify-build@v1
+        with:
+          channel_id: G2JPZ3GC8  # this is the channel id of the dm_db_team room
+          status: FAILED
+          color: danger
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.QSERV_GHA_BUILD_NOTIFICATIONS }}
