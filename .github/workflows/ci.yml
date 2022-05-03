@@ -12,7 +12,6 @@ jobs:
   update-run-image:
     name: Update Qserv image
     runs-on: ubuntu-20.04
-    needs: update-base-images
     steps:
       - name: Install python
         uses: actions/setup-python@v2
