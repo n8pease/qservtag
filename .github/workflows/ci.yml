@@ -24,7 +24,7 @@ jobs:
           pip install click pyyaml requests
 
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0 # 0 is "all history and branch tags"
 
