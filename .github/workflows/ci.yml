@@ -30,7 +30,7 @@ jobs:
 
       - name: show tag with rev-list test
         run: |
-          git describe --tags $(git rev-list --tags --max-count=1)
+          git describe --always $(git rev-list HEAD --max-count=1)
 
       - name: Prepare user build image
         run: |
