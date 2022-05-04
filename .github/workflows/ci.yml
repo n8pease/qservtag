@@ -71,7 +71,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0 # 0 is "all history and branch tags"
-          ref: needs.update-run-image.sha
+          ref: ${{ needs.update-run-image.sha }}
 
       - name: force update tags
         run: git fetch --force --tags
