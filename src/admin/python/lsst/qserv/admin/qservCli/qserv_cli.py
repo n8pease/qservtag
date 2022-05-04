@@ -149,12 +149,6 @@ def wait(seconds):
     time.sleep(int(seconds))
 
 
-@qserv.command()
-def failer():
-    # pass
-    print(3 / 0) # boom!
-
-
 @qserv.command("env")
 @click.option(qserv_image_ev.opt, is_flag=True)
 @click.option(build_image_ev.opt, is_flag=True)

@@ -76,6 +76,3 @@ jobs:
 
       - name: show ref_name
         run: echo ${{github.ref_name}}
-
-      - name: failer
-        run: ./admin/local/cli/qserv failer
