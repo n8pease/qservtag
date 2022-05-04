@@ -146,7 +146,7 @@ import time
 @qserv.command()
 @click.argument("seconds")
 def wait(seconds):
-    time.sleep(int("seconds"))
+    time.sleep(int(seconds))
 
 
 @qserv.command()
