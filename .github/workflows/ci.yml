@@ -12,8 +12,6 @@ jobs:
   update-run-image:
     name: Update Qserv image
     runs-on: ubuntu-20.04
-    outputs:
-      build_image_name: ${{ steps.save_vars. }}
     steps:
       - name: Checkout code
         # run: git clone https://github.com/n8pease/qservtag.git .
