@@ -19,9 +19,12 @@ jobs:
         with:
           fetch-depth: 0 # 0 is "all history and branch tags"
 
+      - name: force update tags
+        run: git fetch --force --tags
+
       - name: show tag with git-describe
-        run: |
-          git describe --always --tags
+        # run: git describe --always --tags
+        run: git describe --always
 
       - name: show ref_name
         run: echo ${{github.ref_name}}
