@@ -14,14 +14,14 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout code
-        run: git clone https://github.com/n8pease/qservtag.git .
-        # uses: actions/checkout@v3
-        # with:
-        #   fetch-depth: 0 # 0 is "all history and branch tags"
+        # run: git clone https://github.com/n8pease/qservtag.git .
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # 0 is "all history and branch tags"
 
       - name: show tag with git-describe
         run: |
-          git describe --always
+          git describe --always --tags
 
       - name: show ref_name
         run: echo ${{github.ref_name}}
