@@ -151,8 +151,8 @@ def wait(seconds):
 
 @qserv.command()
 def failer():
-    pass
-    # print(3 / 0) # boom!
+    # pass
+    print(3 / 0) # boom!
 
 
 @qserv.command("env")
