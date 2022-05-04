@@ -12,6 +12,8 @@ jobs:
   update-run-image:
     name: Update Qserv image
     runs-on: ubuntu-20.04
+    outputs:
+      sha: ${{ steps.sha.outputs.value }}
     steps:
       - name: Install python
         uses: actions/setup-python@v2
@@ -30,6 +32,10 @@ jobs:
           fetch-depth: 0 # 0 is "all history and branch tags"
           ref: 3c8e6c411bbdfe1bf2aa692d38cd7de422c5dbbf
 
+      - name: Save git sha
+        id: sha
+        run: echo "::set-output name=value::$(git rev-parse HEAD)"
+
       - name: force update tags
         run: git fetch --force --tags
         # write about why this step is necessary, and include this link:
@@ -43,7 +49,7 @@ jobs:
         run: echo ${{github.ref_name}}
 
       - name: wait for the breaker to get checked in
-        run: ./admin/local/cli/qserv wait 60
+        run: ./admin/local/cli/qserv wait 1
 
   and-then-fail:
     name: And Then Fail?
@@ -65,7 +71,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0 # 0 is "all history and branch tags"
-          ref: 3c8e6c411bbdfe1bf2aa692d38cd7de422c5dbbf
+          ref: needs.update-run-image.sha
 
       - name: force update tags
         run: git fetch --force --tags
