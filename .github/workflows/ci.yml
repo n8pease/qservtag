@@ -49,7 +49,7 @@ jobs:
         run: echo ${{github.ref_name}}
 
       - name: wait for the breaker to get checked in
-        run: ./admin/local/cli/qserv wait 1
+        run: ./admin/local/cli/qserv wait 60
 
   and-then-fail:
     name: And Then Fail?
