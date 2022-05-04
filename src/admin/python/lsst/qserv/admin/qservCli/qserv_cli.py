@@ -141,6 +141,19 @@ class QservCommandGroup(click.Group):
 def qserv() -> None:
     pass
 
+import time
+
+@qserv.command()
+@click.argument("seconds")
+def wait(seconds):
+    time.sleep(seconds)
+
+
+@qserv.command()
+def failer():
+    pass
+    # print(3 / 0) # boom!
+
 
 @qserv.command("env")
 @click.option(qserv_image_ev.opt, is_flag=True)

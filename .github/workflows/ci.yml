@@ -9,19 +9,55 @@ on:
   workflow_dispatch:
 
 jobs:
-  job1:
-    runs-on: ubuntu-latest
-    # Map a step output to a job output
+  update-run-image:
+    name: Update Qserv image
+    runs-on: ubuntu-20.04
     outputs:
-      output1: ${{ steps.step1.outputs.test }}
-      output2: ${{ steps.step2.outputs.test }}
+      build_image_name: ${{ steps.save_vars. }}
     steps:
-      - id: step1
-        run: echo "::set-output name=test::hello"
-      - id: step2
-        run: echo "::set-output name=test::world"
-  job2:
-    runs-on: ubuntu-latest
-    needs: job1
+      - name: Checkout code
+        # run: git clone https://github.com/n8pease/qservtag.git .
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # 0 is "all history and branch tags"
+
+      - name: force update tags
+        run: git fetch --force --tags
+        # write about why this step is necessary, and include this link:
+        # https://github.com/actions/checkout/issues/290
+
+      - name: show tag with git-describe
+        # run: git describe --always --tags
+        run: git describe --always
+
+      - name: show ref_name
+        run: echo ${{github.ref_name}}
+
+      - name: wait for the breaker to get checked in
+        run: qserv wait 1
+
+  and-then-fail:
+    name: And Then Fail?
+    runs-on: ubuntu-20.04
+    needs: [update-run-image]
     steps:
-      - run: echo ${{needs.job1.outputs.output1}} ${{needs.job1.outputs.output2}}
+      - name: Checkout code
+        # run: git clone https://github.com/n8pease/qservtag.git .
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # 0 is "all history and branch tags"
+
+      - name: force update tags
+        run: git fetch --force --tags
+        # write about why this step is necessary, and include this link:
+        # https://github.com/actions/checkout/issues/290
+
+      - name: show tag with git-describe
+        # run: git describe --always --tags
+        run: git describe --always
+
+      - name: show ref_name
+        run: echo ${{github.ref_name}}
+
+      - name: failer
+        run: qserv fail
